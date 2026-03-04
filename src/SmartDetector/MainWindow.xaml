@@ -1,0 +1,76 @@
+<Window x:Class="SmartDetector.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:SmartDetector.ViewModels"
+        Title="SmartDetector — 실시간 객체 검출" 
+        Height="720" Width="1100"
+        Background="#1E1E2E"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.DataContext>
+        <vm:MainViewModel />
+    </Window.DataContext>
+
+    <Grid Margin="8">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="240" />
+        </Grid.ColumnDefinitions>
+
+        <!-- 영상 표시 영역 -->
+        <Border Grid.Column="0" Background="#181825" CornerRadius="8" Padding="4">
+            <Image Source="{Binding FrameImage}" Stretch="Uniform" RenderOptions.BitmapScalingMode="LowQuality" />
+        </Border>
+
+        <!-- 사이드 패널 -->
+        <StackPanel Grid.Column="1" Margin="8,0,0,0">
+            
+            <!-- 컨트롤 버튼 -->
+            <TextBlock Text="⚡ 컨트롤" Foreground="#CDD6F4" FontSize="16" FontWeight="Bold" Margin="0,0,0,8"/>
+            
+            <Button Content="▶ 시작" Command="{Binding StartCommand}" 
+                    Height="36" FontSize="14" FontWeight="Bold"
+                    Background="#A6E3A1" Foreground="#1E1E2E" 
+                    Margin="0,0,0,4" IsEnabled="{Binding IsRunning, Converter={StaticResource InverseBoolConverter}}" />
+            
+            <Button Content="⏹ 정지" Command="{Binding StopCommand}" 
+                    Height="36" FontSize="14" FontWeight="Bold"
+                    Background="#F38BA8" Foreground="#1E1E2E" 
+                    Margin="0,0,0,12" IsEnabled="{Binding IsRunning}" />
+
+            <!-- 상태 정보 -->
+            <TextBlock Text="📊 상태" Foreground="#CDD6F4" FontSize="16" FontWeight="Bold" Margin="0,0,0,8"/>
+            
+            <Border Background="#313244" CornerRadius="6" Padding="10" Margin="0,0,0,4">
+                <StackPanel>
+                    <TextBlock Foreground="#94E2D5" FontSize="13">
+                        <Run Text="상태: "/><Run Text="{Binding StatusText}" FontWeight="Bold"/>
+                    </TextBlock>
+                    <TextBlock Foreground="#89B4FA" FontSize="13" Margin="0,2,0,0">
+                        <Run Text="카메라: "/><Run Text="{Binding CameraInfo}"/>
+                    </TextBlock>
+                    <TextBlock Foreground="#A6E3A1" FontSize="20" FontWeight="Bold" Margin="0,6,0,0">
+                        <Run Text="FPS: "/><Run Text="{Binding Fps, StringFormat=F1}"/>
+                    </TextBlock>
+                    <TextBlock Foreground="#F9E2AF" FontSize="16" FontWeight="Bold" Margin="0,2,0,0">
+                        <Run Text="검출: "/><Run Text="{Binding ObjectCount}"/><Run Text="개"/>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <!-- 설정 -->
+            <TextBlock Text="⚙ 설정" Foreground="#CDD6F4" FontSize="16" FontWeight="Bold" Margin="0,12,0,8"/>
+            
+            <Border Background="#313244" CornerRadius="6" Padding="10">
+                <StackPanel>
+                    <TextBlock Foreground="#CDD6F4" FontSize="12">
+                        <Run Text="신뢰도 임계값: "/><Run Text="{Binding ConfidenceThreshold, StringFormat=P0}"/>
+                    </TextBlock>
+                    <Slider Value="{Binding ConfidenceThreshold}" Minimum="0.1" Maximum="0.95" 
+                            TickFrequency="0.05" IsSnapToTickEnabled="True" Margin="0,4,0,0"/>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </Grid>
+</Window>
