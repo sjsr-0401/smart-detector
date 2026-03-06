@@ -17,6 +17,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private readonly CameraService _camera = new();
     private readonly DetectorService _detector = new();
     private readonly TrackerService _tracker = new();
+    private readonly CountingService _counter = new();
     private readonly Stopwatch _fpsTimer = new();
     private CancellationTokenSource? _cts;
     private bool _disposed;
@@ -28,7 +29,9 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty] private bool _isRunning;
     [ObservableProperty] private float _confidenceThreshold = 0.5f;
     [ObservableProperty] private bool _trackingEnabled = true;
+    [ObservableProperty] private bool _countingEnabled = true;
     [ObservableProperty] private int _trackedCount;
+    [ObservableProperty] private int _totalCount;
     [ObservableProperty] private string _cameraInfo = "";
 
     /// <summary>모델 경로</summary>
@@ -80,6 +83,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
     {
         if (!IsRunning) return;
         _cts?.Cancel();
+        _tracker.Reset();
+        _counter.Reset();
         IsRunning = false;
         StatusText = "정지됨";
     }
@@ -104,6 +109,13 @@ public partial class MainViewModel : ObservableObject, IDisposable
             {
                 var tracked = _tracker.Update(detections);
                 OverlayService.DrawTrackedObjects(frame, tracked);
+
+                // 카운팅 라인
+                if (CountingEnabled)
+                {
+                    _counter.Update(tracked, frame.Height);
+                    _counter.DrawOverlay(frame);
+                }
             }
             else
             {
@@ -124,6 +136,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
                     Fps = currentFps;
                     ObjectCount = detections.Count;
                     TrackedCount = _tracker.ActiveTracks.Count;
+                    TotalCount = _counter.TotalCount;
                 });
             }
 

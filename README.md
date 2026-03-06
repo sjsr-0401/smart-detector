@@ -31,6 +31,8 @@ SmartDetector captures real-time video from a USB camera, runs YOLOv8 inference 
 | **CameraService** | USB 카메라 캡처, 해상도/FPS 설정 |
 | **DetectorService** | YOLOv8 ONNX 추론, NMS, 클래스 필터링 |
 | **OverlayService** | 바운딩 박스, 레이블, 신뢰도 오버레이 |
+| **TrackerService** | SORT 트래킹 — IoU 매칭, 칼만 예측, 트랙 관리 |
+| **CountingService** | 카운팅 라인 통과 감지 (↑/↓ 방향별 카운트) |
 | **MainViewModel** | MVVM 바인딩, 파이프라인 조율 |
 
 ## Tech Stack
@@ -64,7 +66,7 @@ dotnet run --project src/SmartDetector
 ## Roadmap
 
 - [x] **Phase 1** — Real-time detection (YOLOv8 + USB camera)
-- [ ] **Phase 2** — Object tracking (SORT/DeepSORT), counting lines
+- [x] **Phase 2** — SORT object tracking + counting line (↑↓ direction)
 - [ ] **Phase 3** — Heatmap visualization, event alerts
 - [ ] **Phase 4** — YOLO11/YOLO26 upgrade (NMS-free)
 
