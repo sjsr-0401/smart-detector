@@ -16,6 +16,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
 {
     private readonly CameraService _camera = new();
     private readonly DetectorService _detector = new();
+    private readonly TrackerService _tracker = new();
     private readonly Stopwatch _fpsTimer = new();
     private CancellationTokenSource? _cts;
     private bool _disposed;
@@ -26,6 +27,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty] private string _statusText = "대기 중";
     [ObservableProperty] private bool _isRunning;
     [ObservableProperty] private float _confidenceThreshold = 0.5f;
+    [ObservableProperty] private bool _trackingEnabled = true;
+    [ObservableProperty] private int _trackedCount;
     [ObservableProperty] private string _cameraInfo = "";
 
     /// <summary>모델 경로</summary>
@@ -96,8 +99,16 @@ public partial class MainViewModel : ObservableObject, IDisposable
             _detector.ConfidenceThreshold = ConfidenceThreshold;
             var detections = _detector.Detect(frame);
 
-            // 오버레이
-            OverlayService.DrawDetections(frame, detections);
+            // 트래킹 또는 단순 검출 오버레이
+            if (TrackingEnabled)
+            {
+                var tracked = _tracker.Update(detections);
+                OverlayService.DrawTrackedObjects(frame, tracked);
+            }
+            else
+            {
+                OverlayService.DrawDetections(frame, detections);
+            }
 
             // FPS 계산
             frameCount++;
@@ -112,6 +123,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
                 {
                     Fps = currentFps;
                     ObjectCount = detections.Count;
+                    TrackedCount = _tracker.ActiveTracks.Count;
                 });
             }
 

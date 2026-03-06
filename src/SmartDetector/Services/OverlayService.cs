@@ -35,6 +35,43 @@ public static class OverlayService
         }
     }
 
+    /// <summary>트래킹 결과 오버레이 (ID + 이동 경로)</summary>
+    public static void DrawTrackedObjects(Mat frame, List<TrackedObject> tracks)
+    {
+        foreach (var track in tracks)
+        {
+            var color = Colors[track.Id % Colors.Length];
+            var box = track.BoundingBox;
+
+            // 바운딩 박스
+            Cv2.Rectangle(frame, box, color, 2);
+
+            // ID + 라벨
+            string label = $"[{track.Id}] {track.Label} {track.Confidence:P0}";
+            var textSize = Cv2.GetTextSize(label, HersheyFonts.HersheySimplex, 0.6, 1, out _);
+            var labelBg = new Rect(box.X, box.Y - textSize.Height - 8, textSize.Width + 8, textSize.Height + 8);
+            if (labelBg.Y < 0) labelBg.Y = box.Y;
+
+            Cv2.Rectangle(frame, labelBg, color, -1);
+            Cv2.PutText(frame, label,
+                new Point(labelBg.X + 4, labelBg.Y + textSize.Height + 2),
+                HersheyFonts.HersheySimplex, 0.6, Scalar.White, 1, LineTypes.AntiAlias);
+
+            // 이동 경로 (Trail)
+            if (track.Trail.Count >= 2)
+            {
+                for (int i = 1; i < track.Trail.Count; i++)
+                {
+                    // 최근일수록 진하게
+                    int alpha = (int)(255.0 * i / track.Trail.Count);
+                    var trailColor = new Scalar(color.Val0, color.Val1, color.Val2);
+                    int thickness = i == track.Trail.Count - 1 ? 3 : 1;
+                    Cv2.Line(frame, track.Trail[i - 1], track.Trail[i], trailColor, thickness, LineTypes.AntiAlias);
+                }
+            }
+        }
+    }
+
     /// <summary>FPS 표시</summary>
     public static void DrawFps(Mat frame, double fps)
     {
