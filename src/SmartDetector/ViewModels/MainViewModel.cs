@@ -18,11 +18,14 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private readonly DetectorService _detector = new();
     private readonly TrackerService _tracker = new();
     private readonly CountingService _counter = new();
+    private readonly HeatmapService _heatmap = new();
+    private readonly AlertService _alert = new();
     private readonly Stopwatch _fpsTimer = new();
     private CancellationTokenSource? _cts;
     private bool _disposed;
 
     [ObservableProperty] private ImageSource? _frameImage;
+    [ObservableProperty] private ImageSource? _heatmapImage;
     [ObservableProperty] private double _fps;
     [ObservableProperty] private int _objectCount;
     [ObservableProperty] private string _statusText = "대기 중";
@@ -30,9 +33,13 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty] private float _confidenceThreshold = 0.5f;
     [ObservableProperty] private bool _trackingEnabled = true;
     [ObservableProperty] private bool _countingEnabled = true;
+    [ObservableProperty] private bool _heatmapEnabled = true;
+    [ObservableProperty] private bool _alertEnabled = true;
     [ObservableProperty] private int _trackedCount;
     [ObservableProperty] private int _totalCount;
     [ObservableProperty] private string _cameraInfo = "";
+    [ObservableProperty] private string _alertMessage = "";
+    [ObservableProperty] private bool _alertVisible;
 
     /// <summary>모델 경로</summary>
     private string ModelPath => System.IO.Path.Combine(
@@ -85,6 +92,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         _cts?.Cancel();
         _tracker.Reset();
         _counter.Reset();
+        _alert.Reset();
         IsRunning = false;
         StatusText = "정지됨";
     }
@@ -95,6 +103,28 @@ public partial class MainViewModel : ObservableObject, IDisposable
         _fpsTimer.Restart();
         int frameCount = 0;
 
+        // 알림 이벤트 등록
+        _alert.AlertTriggered += (_, e) =>
+        {
+            Application.Current?.Dispatcher.Invoke(() =>
+            {
+                AlertMessage = $"[{e.Timestamp:HH:mm:ss}] {e.Message}";
+                AlertVisible = true;
+
+                // 3초 후 알림 숨기기
+                var timer = new System.Windows.Threading.DispatcherTimer
+                {
+                    Interval = TimeSpan.FromSeconds(3)
+                };
+                timer.Tick += (s, _) =>
+                {
+                    AlertVisible = false;
+                    ((System.Windows.Threading.DispatcherTimer)s!).Stop();
+                };
+                timer.Start();
+            });
+        };
+
         while (!ct.IsCancellationRequested)
         {
             var frame = _camera.ReadFrame();
@@ -103,6 +133,13 @@ public partial class MainViewModel : ObservableObject, IDisposable
             // 검출
             _detector.ConfidenceThreshold = ConfidenceThreshold;
             var detections = _detector.Detect(frame);
+
+            // 히트맵 누적
+            if (HeatmapEnabled)
+            {
+                _heatmap.Accumulate(detections, frame.Width, frame.Height);
+                _heatmap.DrawOverlay(frame, 0.35);
+            }
 
             // 트래킹 또는 단순 검출 오버레이
             if (TrackingEnabled)
@@ -120,6 +157,12 @@ public partial class MainViewModel : ObservableObject, IDisposable
             else
             {
                 OverlayService.DrawDetections(frame, detections);
+            }
+
+            // 이벤트 알림
+            if (AlertEnabled)
+            {
+                _alert.Check(detections, _counter.TotalCount);
             }
 
             // FPS 계산
@@ -152,6 +195,29 @@ public partial class MainViewModel : ObservableObject, IDisposable
                 }, DispatcherPriority.Render);
             }
             catch (TaskCanceledException) { break; }
+        }
+    }
+
+    [RelayCommand]
+    private void ResetHeatmap()
+    {
+        _heatmap.Reset();
+    }
+
+    [RelayCommand]
+    private void SaveHeatmap()
+    {
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter = "PNG Image|*.png",
+            FileName = $"heatmap_{DateTime.Now:yyyyMMdd_HHmmss}.png"
+        };
+        if (dlg.ShowDialog() == true)
+        {
+            if (_heatmap.SaveHeatmap(dlg.FileName))
+                StatusText = $"Heatmap saved: {dlg.FileName}";
+            else
+                StatusText = "No heatmap data to save";
         }
     }
 
