@@ -68,7 +68,51 @@
                     </TextBlock>
                     <Slider Value="{Binding ConfidenceThreshold}" Minimum="0.1" Maximum="0.95" 
                             TickFrequency="0.05" IsSnapToTickEnabled="True" Margin="0,4,0,0"/>
+                    
+                    <Separator Background="#45475A" Margin="0,8"/>
+                    
+                    <CheckBox Content=" 트래킹" IsChecked="{Binding TrackingEnabled}" 
+                              Foreground="#CDD6F4" FontSize="12" Margin="0,4,0,0"/>
+                    <CheckBox Content=" 카운팅" IsChecked="{Binding CountingEnabled}" 
+                              Foreground="#CDD6F4" FontSize="12" Margin="0,2,0,0"/>
+                    <CheckBox Content=" 히트맵" IsChecked="{Binding HeatmapEnabled}" 
+                              Foreground="#CDD6F4" FontSize="12" Margin="0,2,0,0"/>
+                    <CheckBox Content=" 이벤트 알림" IsChecked="{Binding AlertEnabled}" 
+                              Foreground="#CDD6F4" FontSize="12" Margin="0,2,0,0"/>
                 </StackPanel>
+            </Border>
+
+            <!-- 트래킹/카운팅 -->
+            <TextBlock Text="📈 트래킹" Foreground="#CDD6F4" FontSize="16" FontWeight="Bold" Margin="0,12,0,8"/>
+            
+            <Border Background="#313244" CornerRadius="6" Padding="10" Margin="0,0,0,4">
+                <StackPanel>
+                    <TextBlock Foreground="#B4BEFE" FontSize="14">
+                        <Run Text="활성 트랙: "/><Run Text="{Binding TrackedCount}" FontWeight="Bold"/>
+                    </TextBlock>
+                    <TextBlock Foreground="#F9E2AF" FontSize="14" Margin="0,2,0,0">
+                        <Run Text="총 카운트: "/><Run Text="{Binding TotalCount}" FontWeight="Bold"/>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <!-- 히트맵 컨트롤 -->
+            <TextBlock Text="🔥 히트맵" Foreground="#CDD6F4" FontSize="16" FontWeight="Bold" Margin="0,12,0,8"/>
+            
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                <Button Content="💾 저장" Command="{Binding SaveHeatmapCommand}" 
+                        Height="28" Width="108" FontSize="12"
+                        Background="#89B4FA" Foreground="#1E1E2E" Margin="0,0,4,0"/>
+                <Button Content="🗑 초기화" Command="{Binding ResetHeatmapCommand}" 
+                        Height="28" Width="108" FontSize="12"
+                        Background="#F38BA8" Foreground="#1E1E2E"/>
+            </StackPanel>
+
+            <!-- 알림 배너 -->
+            <Border Background="#F38BA8" CornerRadius="6" Padding="8" Margin="0,12,0,0"
+                    Visibility="{Binding AlertVisible, Converter={StaticResource BoolToVisConverter}}">
+                <TextBlock Text="{Binding AlertMessage}" Foreground="#1E1E2E" 
+                           FontSize="11" FontWeight="Bold" TextWrapping="Wrap"/>
             </Border>
 
         </StackPanel>
